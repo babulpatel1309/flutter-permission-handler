@@ -78,11 +78,17 @@ class PermissionHandler {
   /// Request the user for access to the supplied list of permissiongroups.
   ///
   /// Returns a [Map] containing the status per requested permissiongroup.
+  Future _currentRequestPermissions;
+
   Future<Map<PermissionGroup, PermissionStatus>> requestPermissions(
       List<PermissionGroup> permissions) async {
+    if (_currentRequestPermissions != null) await _currentRequestPermissions;
+
     final List<int> data = Codec.encodePermissionGroups(permissions);
-    final Map<dynamic, dynamic> status =
-        await _methodChannel.invokeMethod('requestPermissions', data);
+    _currentRequestPermissions =
+        _methodChannel.invokeMethod('requestPermissions', data);
+    final Map<dynamic, dynamic> status = await _currentRequestPermissions;
+    _currentRequestPermissions = null;
 
     return Codec.decodePermissionRequestResult(Map<int, int>.from(status));
   }
